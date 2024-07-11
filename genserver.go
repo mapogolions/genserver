@@ -16,11 +16,11 @@ type GenServer interface {
 	Listen(GenServerBehaviour)
 }
 
-func NewGenServerAndListen[T GenServerBehaviour](f func(genserv GenServer) T) T {
-	genserv := NewGenServer()
-	c := f(genserv)
-	go genserv.Listen(c)
-	return c
+func NewGenServerAndListen[T GenServerBehaviour](f func(GenServer) T) T {
+	serv := NewGenServer()
+	behaviour := f(serv)
+	go serv.Listen(behaviour)
+	return behaviour
 }
 
 func NewGenServer() *genServer {
