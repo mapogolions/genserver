@@ -13,14 +13,14 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should return shutdown error when trying to make rpc call on closed client", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int]()
-		codec := NewKVStoreCodec[string, int](dict)
-		client := rpc.NewClientWithCodec(codec)
+		store := NewKVStore[string, int](dict)
+		defer store.Close()
 
 		// act
 		<-time.After(200 * time.Millisecond) // give a chance to start goroutine to listen
-		client.Close()
+		store.Close()
 		var reply int
-		call := client.Go("get", "foo", &reply, nil)
+		call := store.Cast("get", "foo", &reply, nil)
 
 		// assert
 		assert.Equal(t, 0, reply)
@@ -30,12 +30,12 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("delete key should return error if key does not exists", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int]()
-		codec := NewKVStoreCodec[string, int](dict)
-		client := rpc.NewClientWithCodec(codec)
+		store := NewKVStore[string, int](dict)
+		defer store.Close()
 
 		// act
 		var reply int
-		call := client.Go("delete", "one", &reply, nil)
+		call := store.Cast("delete", "one", &reply, nil)
 		<-call.Done
 
 		// assert
@@ -46,12 +46,12 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should delete key from store if it exists", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int](KeyValuePair[string, int]{"one", -1})
-		codec := NewKVStoreCodec[string, int](dict)
-		client := rpc.NewClientWithCodec(codec)
+		store := NewKVStore[string, int](dict)
+		defer store.Close()
 
 		// act
 		var reply int
-		call := client.Go("delete", "one", &reply, nil)
+		call := store.Cast("delete", "one", &reply, nil)
 		<-call.Done
 
 		// assert
@@ -62,11 +62,11 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should put key value pair into kvstore", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int]()
-		codec := NewKVStoreCodec[string, int](dict)
-		client := rpc.NewClientWithCodec(codec)
+		store := NewKVStore[string, int](dict)
+		defer store.Close()
 
 		// act + assert
-		err := client.Call("put", KeyValuePair[string, int]{"one", -1}, nil)
+		err := store.Call("put", KeyValuePair[string, int]{"one", -1}, nil)
 		assert.Nil(t, err)
 
 		v, err := dict.Get("one") // check internal state of the store
@@ -74,7 +74,7 @@ func TestKVStoreCodec(t *testing.T) {
 		assert.Equal(t, -1, v)
 
 		var actual int // get key using rpc client
-		err = client.Call("get", "one", &actual)
+		err = store.Call("get", "one", &actual)
 		assert.Nil(t, err)
 		assert.Equal(t, -1, actual)
 	})
@@ -82,12 +82,12 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should get value by key from kvstore using blocking api of rpc-client", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		codec := NewKVStoreCodec[string, int](dict)
-		client := rpc.NewClientWithCodec(codec)
+		store := NewKVStore[string, int](dict)
+		defer store.Close()
 
 		// act
 		var actual int
-		err := client.Call("get", "one", &actual)
+		err := store.Call("get", "one", &actual)
 
 		// assert
 		assert.Nil(t, err)
@@ -97,12 +97,12 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should ignore that reply is not pointer", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		codec := NewKVStoreCodec[string, int](dict)
-		client := rpc.NewClientWithCodec(codec)
+		store := NewKVStore[string, int](dict)
+		defer store.Close()
 
 		// act
 		var reply int
-		call := client.Go("get", "one", reply, nil)
+		call := store.Cast("get", "one", reply, nil)
 		<-call.Done
 
 		// assert
@@ -112,12 +112,12 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should ignore wrong type of reply", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		codec := NewKVStoreCodec[string, int](dict)
-		client := rpc.NewClientWithCodec(codec)
+		store := NewKVStore[string, int](dict)
+		defer store.Close()
 
 		// act
 		var reply string
-		call := client.Go("get", "one", &reply, nil)
+		call := store.Cast("get", "one", &reply, nil)
 		<-call.Done
 
 		// assert
@@ -127,23 +127,23 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should ignore nil reply", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		codec := NewKVStoreCodec[string, int](dict)
-		client := rpc.NewClientWithCodec(codec)
+		store := NewKVStore[string, int](dict)
+		defer store.Close()
 
 		// act + assert
-		call := client.Go("get", "one", nil, nil)
+		call := store.Cast("get", "one", nil, nil)
 		<-call.Done
 	})
 
 	t.Run("should get value by key from store using non-blocking api of rpc-client", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		codec := NewKVStoreCodec[string, int](dict)
-		client := rpc.NewClientWithCodec(codec)
+		store := NewKVStore[string, int](dict)
+		defer store.Close()
 
 		// act
 		var actual int
-		call := client.Go("get", "one", &actual, nil)
+		call := store.Cast("get", "one", &actual, nil)
 		<-call.Done
 
 		// assert
@@ -162,26 +162,26 @@ type KeyValuePair[K, V any] struct {
 	Value V
 }
 
-type kvStoreCodec[K comparable, V any] struct {
+type kvStore[K comparable, V any] struct {
 	GenServer
 	store KVStore[K, V]
 }
 
 // // version 1
-// func NewKVStoreCodec[K comparable, V any](store KVStore[K, V]) *kvStoreCodec[K, V] {
-// 	c := &kvStoreCodec[K, V]{store: store, GenServer: NewGenServer()}
+// func NewKVStore[K comparable, V any](store KVStore[K, V]) *kvStore[K, V] {
+// 	c := &kvStore[K, V]{store: store, GenServer: NewGenServer()}
 // 	go c.Listen(c)
 // 	return c
 // }
 
 // version 2
-func NewKVStoreCodec[K comparable, V any](store KVStore[K, V]) *kvStoreCodec[K, V] {
-	return NewGenServerAndListen(func(genserv GenServer) *kvStoreCodec[K, V] {
-		return &kvStoreCodec[K, V]{store: store, GenServer: genserv}
+func NewKVStore[K comparable, V any](store KVStore[K, V]) *kvStore[K, V] {
+	return NewGenServerAndListen(func(genserv GenServer) *kvStore[K, V] {
+		return &kvStore[K, V]{store: store, GenServer: genserv}
 	})
 }
 
-func (c *kvStoreCodec[K, V]) Handle(serviceMethod string, _ uint64, body any) (any, error) {
+func (c *kvStore[K, V]) Handle(serviceMethod string, _ uint64, body any) (any, error) {
 	var v any
 	var err error
 	switch serviceMethod {

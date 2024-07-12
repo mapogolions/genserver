@@ -12,8 +12,10 @@ type GenServerBehaviour interface {
 }
 
 type GenServer interface {
-	rpc.ClientCodec
 	Listen(GenServerBehaviour)
+	Cast(serviceMethod string, args any, reply any, done chan *rpc.Call) *rpc.Call
+	Call(serviceMethod string, args any, reply any) error
+	Close() error
 }
 
 func NewGenServerAndListen[T GenServerBehaviour](f func(GenServer) T) T {
@@ -26,21 +28,44 @@ func NewGenServerAndListen[T GenServerBehaviour](f func(GenServer) T) T {
 func NewGenServer() *genServer {
 	requests := make(chan request, 4096)
 	responses := make(chan response, 4096)
-	return &genServer{requests: requests, responses: responses}
+	codec := &genServerCodec{requests: requests, responses: responses}
+	client := rpc.NewClientWithCodec(codec)
+	return &genServer{codec: codec, client: client}
 }
 
 type genServer struct {
+	codec  *genServerCodec
+	client *rpc.Client
+}
+
+func (c *genServer) Cast(serviceMethod string, args any, reply any, done chan *rpc.Call) *rpc.Call {
+	return c.client.Go(serviceMethod, args, reply, done)
+}
+
+func (c *genServer) Call(serviceMethod string, args any, reply any) error {
+	return c.client.Call(serviceMethod, args, reply)
+}
+
+func (c *genServer) Close() error {
+	return c.client.Close()
+}
+
+func (c *genServer) Listen(behaviour GenServerBehaviour) {
+	c.codec.Listen(behaviour)
+}
+
+type genServerCodec struct {
 	requests  chan request
 	responses chan response
 	current   response
 }
 
-func (c *genServer) WriteRequest(req *rpc.Request, body any) error {
+func (c *genServerCodec) WriteRequest(req *rpc.Request, body any) error {
 	c.requests <- request{seq: req.Seq, serviceMethod: req.ServiceMethod, body: body}
 	return nil
 }
 
-func (c *genServer) ReadResponseHeader(res *rpc.Response) error {
+func (c *genServerCodec) ReadResponseHeader(res *rpc.Response) error {
 	kvRes, ok := <-c.responses
 	if !ok {
 		return io.EOF
@@ -54,7 +79,7 @@ func (c *genServer) ReadResponseHeader(res *rpc.Response) error {
 	return kvRes.result.Err
 }
 
-func (c *genServer) ReadResponseBody(body any) error {
+func (c *genServerCodec) ReadResponseBody(body any) error {
 	// if `ReadResponseHeader` DOES NOT return error then `ReadResponseBody` will be called => c.current.result.Err == nil
 	if c.current.result.Err != nil {
 		log.Fatal("must be unreachable")
@@ -78,7 +103,19 @@ func (c *genServer) ReadResponseBody(body any) error {
 	return nil
 }
 
-func (c *genServer) Listen(behaviour GenServerBehaviour) {
+/**
+ * Codec's `Close` method called by the `rpc.Client`
+ * `rpc.Client` provides the following guaranties:
+ * - called once
+ * - thread safety
+ */
+func (c *genServerCodec) Close() error {
+	close(c.requests)
+	close(c.responses)
+	return nil
+}
+
+func (c *genServerCodec) Listen(behaviour GenServerBehaviour) {
 	for {
 		req, ok := <-c.requests
 		if !ok {
@@ -86,20 +123,12 @@ func (c *genServer) Listen(behaviour GenServerBehaviour) {
 			return
 		}
 		v, err := behaviour.Handle(req.serviceMethod, req.seq, req.body)
-		c.responses <- response{seq: req.seq, serviceMethod: req.serviceMethod, result: result[any]{v, err}}
+		c.responses <- response{
+			seq:           req.seq,
+			serviceMethod: req.serviceMethod,
+			result:        result[any]{v, err},
+		}
 	}
-}
-
-/**
- * Codec's `Close` method called by the `rpc.Client`
- * `rpc.Client` provides the following guaranties:
- * - called once
- * - thread safety
- */
-func (c *genServer) Close() error {
-	close(c.requests)
-	close(c.responses)
-	return nil
 }
 
 type request struct {
