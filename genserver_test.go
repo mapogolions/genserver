@@ -13,7 +13,7 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should return shutdown error when trying to make rpc call on closed client", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int]()
-		store := NewKVStore[string, int](dict)
+		store := NewKVStoreServer[string, int](dict)
 
 		// act
 		<-time.After(200 * time.Millisecond) // give a chance to start goroutine to listen
@@ -29,7 +29,7 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("delete key should return error if key does not exists", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int]()
-		store := NewKVStore[string, int](dict)
+		store := NewKVStoreServer[string, int](dict)
 		defer store.Close()
 
 		// act
@@ -45,7 +45,7 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should delete key from store if it exists", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int](KeyValuePair[string, int]{"one", -1})
-		store := NewKVStore[string, int](dict)
+		store := NewKVStoreServer[string, int](dict)
 		defer store.Close()
 
 		// act
@@ -61,7 +61,7 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should put key value pair into kvstore", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int]()
-		store := NewKVStore[string, int](dict)
+		store := NewKVStoreServer[string, int](dict)
 		defer store.Close()
 
 		// act + assert
@@ -81,7 +81,7 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should get value by key from kvstore using blocking api of rpc-client", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		store := NewKVStore[string, int](dict)
+		store := NewKVStoreServer[string, int](dict)
 		defer store.Close()
 
 		// act
@@ -96,7 +96,7 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should ignore that reply is not pointer", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		store := NewKVStore[string, int](dict)
+		store := NewKVStoreServer[string, int](dict)
 		defer store.Close()
 
 		// act
@@ -111,7 +111,7 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should ignore wrong type of reply", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		store := NewKVStore[string, int](dict)
+		store := NewKVStoreServer[string, int](dict)
 		defer store.Close()
 
 		// act
@@ -126,7 +126,7 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should ignore nil reply", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		store := NewKVStore[string, int](dict)
+		store := NewKVStoreServer[string, int](dict)
 		defer store.Close()
 
 		// act + assert
@@ -137,7 +137,7 @@ func TestKVStoreCodec(t *testing.T) {
 	t.Run("should get value by key from store using non-blocking api of rpc-client", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		store := NewKVStore[string, int](dict)
+		store := NewKVStoreServer[string, int](dict)
 		defer store.Close()
 
 		// act
@@ -161,26 +161,28 @@ type KeyValuePair[K, V any] struct {
 	Value V
 }
 
-type kvStore[K comparable, V any] struct {
+// Server process (by its nature) that uses a dedicated concurrency unit (goroutine, erlang process, fiber etc)
+// and constantly listens for incoming requests.
+type kvStoreServer[K comparable, V any] struct {
 	GenServer
 	store KVStore[K, V]
 }
 
 // // version 1
-// func NewKVStore[K comparable, V any](store KVStore[K, V]) *kvStore[K, V] {
-// 	c := &kvStore[K, V]{store: store, GenServer: NewGenServer()}
+// func NewKVStoreServer[K comparable, V any](store KVStore[K, V]) *kvStoreServer[K, V] {
+// 	c := &kvStoreServer[K, V]{store: store, GenServer: NewGenServer()}
 // 	go c.Listen(c)
 // 	return c
 // }
 
 // version 2
-func NewKVStore[K comparable, V any](store KVStore[K, V]) *kvStore[K, V] {
-	return NewGenServerAndListen(func(genserv GenServer) *kvStore[K, V] {
-		return &kvStore[K, V]{store: store, GenServer: genserv}
+func NewKVStoreServer[K comparable, V any](store KVStore[K, V]) *kvStoreServer[K, V] {
+	return NewGenServerAndListen(func(genserv GenServer) *kvStoreServer[K, V] {
+		return &kvStoreServer[K, V]{store: store, GenServer: genserv}
 	})
 }
 
-func (c *kvStore[K, V]) Handle(serviceMethod string, _ uint64, body any) (any, error) {
+func (c *kvStoreServer[K, V]) Handle(serviceMethod string, _ uint64, body any) (any, error) {
 	var v any
 	var err error
 	switch serviceMethod {
