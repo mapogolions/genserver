@@ -177,23 +177,23 @@ type kvStoreServer[K comparable, V any] struct {
 
 // version 2
 func NewKVStoreServer[K comparable, V any](store KVStore[K, V]) *kvStoreServer[K, V] {
-	return NewGenServerAndListen(func(genserv GenServer) *kvStoreServer[K, V] {
+	return Listen(func(genserv GenServer) *kvStoreServer[K, V] {
 		return &kvStoreServer[K, V]{store: store, GenServer: genserv}
 	})
 }
 
-func (c *kvStoreServer[K, V]) Handle(serviceMethod string, _ uint64, body any) (any, error) {
+func (s *kvStoreServer[K, V]) Handle(serviceMethod string, _ uint64, body any) (any, error) {
 	var v any
 	var err error
 	switch serviceMethod {
 	case "get":
-		v, err = c.store.Get(body.(K))
+		v, err = s.store.Get(body.(K))
 	case "delete":
-		v, err = c.store.Delete(body.(K))
+		v, err = s.store.Delete(body.(K))
 	case "put":
 		kvp, ok := body.(KeyValuePair[K, V])
 		if ok {
-			err = c.store.Put(kvp.Key, kvp.Value)
+			err = s.store.Put(kvp.Key, kvp.Value)
 		} else {
 			err = errors.New("invalid arguments")
 		}

@@ -18,7 +18,7 @@ type GenServer interface {
 	Close() error
 }
 
-func NewGenServerAndListen[T GenServerBehaviour](f func(GenServer) T) T {
+func Listen[T GenServerBehaviour](f func(GenServer) T) T {
 	serv := NewGenServer()
 	behaviour := f(serv)
 	go serv.Listen(behaviour)
@@ -38,20 +38,20 @@ type genServer struct {
 	client *rpc.Client
 }
 
-func (c *genServer) Cast(serviceMethod string, args any, reply any, done chan *rpc.Call) *rpc.Call {
-	return c.client.Go(serviceMethod, args, reply, done)
+func (s *genServer) Cast(serviceMethod string, args any, reply any, done chan *rpc.Call) *rpc.Call {
+	return s.client.Go(serviceMethod, args, reply, done)
 }
 
-func (c *genServer) Call(serviceMethod string, args any, reply any) error {
-	return c.client.Call(serviceMethod, args, reply)
+func (s *genServer) Call(serviceMethod string, args any, reply any) error {
+	return s.client.Call(serviceMethod, args, reply)
 }
 
-func (c *genServer) Close() error {
-	return c.client.Close()
+func (s *genServer) Close() error {
+	return s.client.Close()
 }
 
-func (c *genServer) Listen(behaviour GenServerBehaviour) {
-	c.codec.Listen(behaviour)
+func (s *genServer) Listen(behaviour GenServerBehaviour) {
+	s.codec.Listen(behaviour)
 }
 
 type genServerCodec struct {
