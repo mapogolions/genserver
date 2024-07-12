@@ -66,17 +66,17 @@ func (c *genServerCodec) WriteRequest(req *rpc.Request, body any) error {
 }
 
 func (c *genServerCodec) ReadResponseHeader(res *rpc.Response) error {
-	kvRes, ok := <-c.responses
+	response, ok := <-c.responses
 	if !ok {
 		return io.EOF
 	}
-	c.current = kvRes
-	res.Seq = kvRes.seq
-	res.ServiceMethod = kvRes.serviceMethod
-	if kvRes.result.Err != nil {
-		res.Error = kvRes.result.Err.Error()
+	c.current = response
+	res.Seq = response.seq
+	res.ServiceMethod = response.serviceMethod
+	if response.result.Err != nil {
+		res.Error = response.result.Err.Error()
 	}
-	return kvRes.result.Err
+	return response.result.Err
 }
 
 func (c *genServerCodec) ReadResponseBody(body any) error {
