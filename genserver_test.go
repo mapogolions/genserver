@@ -14,7 +14,6 @@ func TestKVStoreCodec(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int]()
 		store := NewKVStore[string, int](dict)
-		defer store.Close()
 
 		// act
 		<-time.After(200 * time.Millisecond) // give a chance to start goroutine to listen
