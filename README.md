@@ -1,12 +1,20 @@
 ## Gen Server
 
+### Contents
+- [The basic idea](#the-basic-idea)
+    - [Shared Memory and Locks](#shared-memory--locks)
+    - [Message passing](#message-passing)
+- [How to create a *server process*](#how-to-create-a-server-process)
+- [How to communicate with a *server process*](#how-to-communicate-with-a-server-process)
+- [How to implement the *genserver.GenServerBehaviour* contract](#how-to-implement-the-genservergenserverbehaviour-contract)
+
+### The basic idea
+
 Inspired by Erlang's **gen_server** module.
 
 **genserver** represents a set of abstractions and concrete implementations of parts of code necessary for writing *server processes*.
 
 **Server process** is an informal name for a dedicated concurrency unit that runs for an extended period and listens for incoming requests from other concurrency units.
-
-### The basic idea
 
 Let's say requires in-memory storage to manage settings, sessions, or something else. It must support simultaneous access by N concurrency units (i.e., be thread-safe).
 
@@ -24,7 +32,7 @@ In Erlang, the unit of concurrency is the lightweight process. These processes d
 
 <img src="./assets/genserver.png">
 
-#### How to create a *server process*
+### How to create a *server process*
 
 1) define a server that embeds `genserver.GenServer`.
 
@@ -53,3 +61,32 @@ func NewSettingsServer(/* state */) *SettingsServer {
 	})
 }
 ```
+
+### How to communicate with a *server process*
+
+For communication with the *server process*, `genserver.GenServer` provides two methods: `Cast` and `Call`.
+
+1. *Cast* - a non-blocking request to the *server process*. This method remains non-blocking as long as the buffered channel of the server process has enough free slots.
+
+```golang
+settings := NewSettingServer()
+var host string
+call := settings.Cast("get", "db.host", &host, nil) // non-blocking
+<-call.Done // wait for result
+```
+
+2. `Call` - a blocking request to the *server process*. This auxiliary method internally uses `GenServer.Call` and then `<-call.Done`.
+
+Instead of directly using the *Cast* and *Call* methods, you can write auxiliary methods for *SettingsServer*.
+
+```golang
+func (s *SettingsServer) GetSetting(name string) (string, err) {
+    var host string
+    err := settings.Call("get", "db.host", &host, nil)
+    return host, err
+}
+```
+
+#### How to implement the `genserver.GenServerBehaviour` contract
+
+to be continued ...
