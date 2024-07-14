@@ -1,12 +1,14 @@
 ## Gen Server
 
-**gen_server** in Erlang represents a set of abstractions and concrete implementations of parts of code necessary for writing *server processes*.
+Inspired by Erlang's **gen_server** module.
 
-**Server process** is an informal name for a dedicated (spawned) concurrency unit that runs for an extended period and listens for incoming requests from other concurrency unit.
+**genserver** represents a set of abstractions and concrete implementations of parts of code necessary for writing *server processes*.
+
+**Server process** is an informal name for a dedicated concurrency unit that runs for an extended period and listens for incoming requests from other concurrency units.
 
 ### The basic idea
 
-Let's say an application requires in-memory storage to manage settings, sessions, or something else. It must support simultaneous access by N concurrency units (i.e., be thread-safe).
+Let's say requires in-memory storage to manage settings, sessions, or something else. It must support simultaneous access by N concurrency units (i.e., be thread-safe).
 
 #### Shared Memory & Locks
 
@@ -38,7 +40,7 @@ type SettingsServer struct {
 
 ```golang
 func (s *SettingsServer) Handle(serviceMethod string, seq uint64, body any) (any, error) {
-    panic("not implemented") 
+    panic("not implemented")
 }
 ```
 
