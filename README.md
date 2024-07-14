@@ -2,8 +2,6 @@
 
 ### Contents
 - [The basic idea](#the-basic-idea)
-    - [Shared Memory and Locks](#shared-memory--locks)
-    - [Message passing](#message-passing)
 - [How to create a *server process*](#how-to-create-a-server-process)
 - [How to communicate with a *server process*](#how-to-communicate-with-a-server-process)
 - [How to implement the *genserver.GenServerBehaviour* contract](#how-to-implement-the-genservergenserverbehaviour-contract)
