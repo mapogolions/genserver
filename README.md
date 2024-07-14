@@ -1,6 +1,5 @@
 ## Gen Server
 
-### Contents
 - [The basic idea](#the-basic-idea)
 - [How to create a *server process*](#how-to-create-a-server-process)
 - [How to communicate with a *server process*](#how-to-communicate-with-a-server-process)
