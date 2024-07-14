@@ -82,7 +82,7 @@ Instead of directly using the *Cast* and *Call* methods, you can write auxiliary
 ```golang
 func (s *SettingsServer) GetSetting(name string) (string, err) {
     var host string
-    err := settings.Call("get", "db.host", &host, nil)
+    err := s.Call("get", "db.host", &host, nil)
     return host, err
 }
 ```
