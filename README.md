@@ -9,7 +9,7 @@ In Erlang, the unit of concurrency is the lightweight process. These processes d
 
 ### Example
 
-Let's assume that your app requires some kind of in memory storage. It must support simultaneous access by multiple concurrency units (i.e., be thread-safe).
+Let's say an application requires in-memory storage to manage settings, sessions, or something else. It must support simultaneous access by N concurrency units (i.e., be thread-safe).
 
 #### Shared Memory & Locks
 
@@ -17,14 +17,14 @@ One possible solution is to use a shared memory model by writing a structure tha
 
 #### Message passing
 
-At the same time, you can look at the task from another perspective. For example, in Erlang, where you do not have access to shared memory, a primary solution is to create a separate concurrency unit that handles requests, modifies its internal state, and sends responses. This corresponds to what is described above as a *server proces*.
+In Erlang, where you do not have access to shared memory, a primary solution is to create a separate concurrency unit that handles requests, modifies its internal state, and sends responses. This corresponds to what is described above as a *server proces*.
 
 #### How to create a *server process*
 
 1) define a server that embeds `genserver.GenServer`.
 
 ```golang
-type EventLogger struct {
+type SettingsServer struct {
     genserver.GenServer
 
     // define state
@@ -34,7 +34,7 @@ type EventLogger struct {
 2) implement the `genserver.GenServerBehaviour`  contract
 
 ```golang
-func (s *EventLogger) Handle(serviceMethod string, seq uint64, body any) (any, error) {
+func (s *SettingsServer) Handle(serviceMethod string, seq uint64, body any) (any, error) {
     panic("not implemented") 
 }
 ```
@@ -42,9 +42,9 @@ func (s *EventLogger) Handle(serviceMethod string, seq uint64, body any) (any, e
 3) write a factory function
 
 ```golang
-func NewLogServer(/* state */) *EventLogger {
-	return Listen(func(genserv GenServer) *EventLogger {
-		return &EventLogger{GenServer: genserv, /* state */ }
+func NewSettingsServer(/* state */) *SettingsServer {
+	return Listen(func(genserv GenServer) *SettingsServer {
+		return &SettingsServer{GenServer: genserv, /* state */ }
 	})
 }
 ```
