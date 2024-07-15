@@ -87,4 +87,17 @@ func (s *SettingsServer) GetSetting(name string) (string, err) {
 
 #### How to implement the `genserver.GenServerBehaviour` contract
 
-to be continued ...
+The contract defines a single method, `Handle`. The parameters of this method receive values from the arguments passed to the *Cast* or *Call* methods.
+
+```golang
+call := settings.Cast("get", "db.host", &host, nil)
+
+func (s *SettingsServer) Handle(serviceMethod string, seq uint64, body any) (any, error) {
+    // serviceMethod - "get"
+    // body - "db.host"
+    // seq - unique identifier assigned to each request to a server process. 99.99% of the time just ignore it.
+}
+```
+
+- You can implement this method without worrying about locks or other synchronization primitives for modifying the state of a *server process*.
+- Avoid long-running operations inside the `Handle` method. This can cause a *server process* mailbox to overflow.
