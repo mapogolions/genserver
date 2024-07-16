@@ -3,6 +3,7 @@ package genserver
 import (
 	"errors"
 	"net/rpc"
+	"sync"
 	"testing"
 	"time"
 
@@ -10,6 +11,37 @@ import (
 )
 
 func TestGenServer(t *testing.T) {
+	t.Run("should handle N concurrent requests", func(t *testing.T) {
+		// arrange
+		store := NewKVStoreServer[string, int](NewDict[string, int]())
+		defer store.Close()
+		source := map[string]int{"one": 1, "two": 2, "three": 3}
+
+		// act + assert
+		wg := sync.WaitGroup{}
+		for key, value := range source {
+			wg.Add(1)
+			go func(key string, value int) {
+				defer wg.Done()
+				err := store.Call("put", KeyValuePair[string, int]{key, value}, nil)
+				assert.Nil(t, err)
+			}(key, value)
+		}
+		wg.Wait()
+
+		for key, expected := range source {
+			wg.Add(1)
+			go func(key string, expected int) {
+				defer wg.Done()
+				var reply int
+				err := store.Call("get", key, &reply)
+				assert.Nil(t, err)
+				assert.Equal(t, expected, reply)
+			}(key, expected)
+		}
+		wg.Wait()
+	})
+
 	t.Run("should return shutdown error when trying to make call on closed server", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int]()
