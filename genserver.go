@@ -7,6 +7,10 @@ import (
 	"reflect"
 )
 
+func Reply[T any](call *rpc.Call) T {
+	return *(call.Reply.(*T))
+}
+
 type GenServerBehaviour interface {
 	Handle(serviceMethod string, seq uint64, body any) (any, error)
 }

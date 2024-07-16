@@ -56,6 +56,7 @@ func TestGenServer(t *testing.T) {
 		// assert
 		assert.Nil(t, call.Error)
 		assert.Equal(t, -1, reply)
+		assert.Equal(t, -1, Reply[int](call))
 	})
 
 	t.Run("should put key value pair into store", func(t *testing.T) {
@@ -72,7 +73,7 @@ func TestGenServer(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, -1, v)
 
-		var actual int // get key using rpc client
+		var actual int
 		err = store.Call("get", "one", &actual)
 		assert.Nil(t, err)
 		assert.Equal(t, -1, actual)
@@ -91,6 +92,22 @@ func TestGenServer(t *testing.T) {
 		// assert
 		assert.Nil(t, err)
 		assert.Equal(t, -1, actual)
+	})
+
+	t.Run("should get value by key from store using non-blocking api", func(t *testing.T) {
+		// arrange
+		dict := NewDict(KeyValuePair[string, int]{"one", -1})
+		store := NewKVStoreServer[string, int](dict)
+		defer store.Close()
+
+		// act
+		var actual int
+		call := store.Cast("get", "one", &actual, nil)
+		<-call.Done
+
+		// assert
+		assert.Equal(t, -1, actual)
+		assert.Equal(t, -1, Reply[int](call))
 	})
 
 	t.Run("should ignore that reply is not pointer", func(t *testing.T) {
@@ -134,21 +151,6 @@ func TestGenServer(t *testing.T) {
 		<-call.Done
 
 		assert.Nil(t, call.Reply)
-	})
-
-	t.Run("should get value by key from store using non-blocking api", func(t *testing.T) {
-		// arrange
-		dict := NewDict(KeyValuePair[string, int]{"one", -1})
-		store := NewKVStoreServer[string, int](dict)
-		defer store.Close()
-
-		// act
-		var actual int
-		call := store.Cast("get", "one", &actual, nil)
-		<-call.Done
-
-		// assert
-		assert.Equal(t, -1, actual)
 	})
 }
 
