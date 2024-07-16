@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestKVStoreCodec(t *testing.T) {
-	t.Run("should return shutdown error when trying to make rpc call on closed client", func(t *testing.T) {
+func TestGenServer(t *testing.T) {
+	t.Run("should return shutdown error when trying to make call on closed server", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int]()
 		store := NewKVStoreServer[string, int](dict)
@@ -58,7 +58,7 @@ func TestKVStoreCodec(t *testing.T) {
 		assert.Equal(t, -1, reply)
 	})
 
-	t.Run("should put key value pair into kvstore", func(t *testing.T) {
+	t.Run("should put key value pair into store", func(t *testing.T) {
 		// arrange
 		dict := NewDict[string, int]()
 		store := NewKVStoreServer[string, int](dict)
@@ -78,7 +78,7 @@ func TestKVStoreCodec(t *testing.T) {
 		assert.Equal(t, -1, actual)
 	})
 
-	t.Run("should get value by key from kvstore using blocking api of rpc-client", func(t *testing.T) {
+	t.Run("should get value by key from kvstore using blocking api", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
 		store := NewKVStoreServer[string, int](dict)
@@ -132,9 +132,11 @@ func TestKVStoreCodec(t *testing.T) {
 		// act + assert
 		call := store.Cast("get", "one", nil, nil)
 		<-call.Done
+
+		assert.Nil(t, call.Reply)
 	})
 
-	t.Run("should get value by key from store using non-blocking api of rpc-client", func(t *testing.T) {
+	t.Run("should get value by key from store using non-blocking api", func(t *testing.T) {
 		// arrange
 		dict := NewDict(KeyValuePair[string, int]{"one", -1})
 		store := NewKVStoreServer[string, int](dict)
