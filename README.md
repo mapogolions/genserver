@@ -61,20 +61,26 @@ func NewSettingsServer(/* state */) *SettingsServer {
 
 ### How to communicate with a *server process*
 
-For communication with the *server process*, `genserver.GenServer` provides two methods: `Cast` and `Call`.
+For communication with a *server process*, `genserver.GenServer` provides two methods: `Cast` and `Call`.
 
-1. *Cast* - a non-blocking request to the *server process*. This method remains non-blocking as long as the buffered channel of the server process has enough free slots.
+1. *Cast* - a non-blocking request to a *server process*. This method remains non-blocking as long as the buffered channel of the server process has enough free slots.
 
 ```golang
-settings := NewSettingServer()
 var host string
-call := settings.Cast("get", "db.host", &host, nil) // non-blocking
+call := settings.Cast("get", "db.host", &host, nil)
 <-call.Done // wait for result
 ```
 
-2. `Call` - a blocking request to the *server process*. This auxiliary method internally uses `GenServer.Call` and then `<-call.Done`.
+2. `Call` - a blocking request to a *server process*.
 
-Instead of directly using the *Cast* and *Call* methods, you can write auxiliary methods for *SettingsServer*.
+```golang
+var host string
+err := settings.Call("get", "db.host", &host)
+```
+
+This method internally uses `GenServer.Call` and then `<-call.Done`.
+
+Instead of directly using the *Cast* and *Call* methods, you can write your own API for *SettingsServer*.
 
 ```golang
 func (s *SettingsServer) GetSetting(name string) (string, err) {
