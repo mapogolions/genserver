@@ -28,8 +28,6 @@ In Erlang, where you do not have access to shared memory, a primary solution is 
 In Erlang, the unit of concurrency is the lightweight process. These processes do not share memory and communicate using *asynchronous message passing*. In Go, the unit of concurrency is the *goroutine*. To reproduce asynchronous message communication in Go, this project uses *buffered channels*.
 
 
-<img src="./assets/genserver.png">
-
 ### How to create a *server process*
 
 1) define a server that embeds `genserver.GenServer`.
