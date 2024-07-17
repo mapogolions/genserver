@@ -4,6 +4,7 @@
 - [How to create a *server process*](#how-to-create-a-server-process)
 - [How to communicate with a *server process*](#how-to-communicate-with-a-server-process)
 - [How to implement *genserver.GenServerBehaviour*](#how-to-implement-genservergenserverbehaviour)
+- [Under the hood](#under-the-hood)
 
 ### The basic idea
 
@@ -78,7 +79,7 @@ var host string
 err := settings.Call("get", "db.host", &host)
 ```
 
-This method internally uses `GenServer.Call` and then `<-call.Done`.
+This method internally uses `GenServer.Cast` & `<-call.Done`.
 
 Instead of directly using the *Cast* and *Call* methods, you can write your own API for *SettingsServer*. It's up to you whether the method is blocking or non-blocking. Typically, read operations are blocking and writes are non-blocking.
 
@@ -110,3 +111,7 @@ func (s *SettingsServer) Handle(serviceMethod string, seq uint64, body any) (any
 Examples:
 - [KVStoreServer](./tests/kvstore_server_test.go)
 - [MathServer](./tests/math_server_test.go)
+
+### Under the hood
+
+<img src="./assets/genserver-under-the-hood.png">
