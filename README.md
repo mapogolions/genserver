@@ -4,7 +4,6 @@
 - [How to create a *server process*](#how-to-create-a-server-process)
 - [How to communicate with a *server process*](#how-to-communicate-with-a-server-process)
 - [How to implement *genserver.GenServerBehaviour*](#how-to-implement-genservergenserverbehaviour)
-- [Under the hood](#under-the-hood)
 
 ### The basic idea
 
@@ -26,6 +25,8 @@ In Erlang, where you do not have access to shared memory, a primary solution is 
 
 
 In Erlang, the unit of concurrency is the lightweight process. These processes do not share memory and communicate using *asynchronous message passing*. In Go, the unit of concurrency is the *goroutine*. To reproduce asynchronous message communication in Go, this project uses *buffered channels*.
+
+<img src="./assets/genserver-under-the-hood.png">
 
 
 ### How to create a *server process*
@@ -109,7 +110,3 @@ func (s *SettingsServer) Handle(serviceMethod string, seq uint64, body any) (any
 Examples:
 - [KVStoreServer](./tests/kvstore_server_test.go)
 - [MathServer](./tests/math_server_test.go)
-
-### Under the hood
-
-<img src="./assets/genserver-under-the-hood.png">
