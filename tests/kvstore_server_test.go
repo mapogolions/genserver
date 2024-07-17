@@ -1,4 +1,4 @@
-package genserver
+package tests
 
 import (
 	"errors"
@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mapogolions/genserver"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -88,7 +89,7 @@ func TestGenServer(t *testing.T) {
 		// assert
 		assert.Nil(t, call.Error)
 		assert.Equal(t, -1, reply)
-		assert.Equal(t, -1, Reply[int](call))
+		assert.Equal(t, -1, genserver.Reply[int](call))
 	})
 
 	t.Run("should put key value pair into store", func(t *testing.T) {
@@ -139,7 +140,7 @@ func TestGenServer(t *testing.T) {
 
 		// assert
 		assert.Equal(t, -1, actual)
-		assert.Equal(t, -1, Reply[int](call))
+		assert.Equal(t, -1, genserver.Reply[int](call))
 	})
 
 	t.Run("should ignore that reply is not pointer", func(t *testing.T) {
@@ -200,7 +201,7 @@ type KeyValuePair[K, V any] struct {
 // Server process (by its nature) that uses a dedicated concurrency unit (goroutine, erlang process, fiber etc)
 // and constantly listens for incoming requests.
 type kvStoreServer[K comparable, V any] struct {
-	GenServer
+	genserver.GenServer
 	store KVStore[K, V]
 }
 
@@ -213,7 +214,7 @@ type kvStoreServer[K comparable, V any] struct {
 
 // version 2
 func NewKVStoreServer[K comparable, V any](store KVStore[K, V]) *kvStoreServer[K, V] {
-	return Listen(func(genserv GenServer) *kvStoreServer[K, V] {
+	return genserver.Listen(func(genserv genserver.GenServer) *kvStoreServer[K, V] {
 		return &kvStoreServer[K, V]{store: store, GenServer: genserv}
 	})
 }

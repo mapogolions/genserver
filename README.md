@@ -80,10 +80,10 @@ err := settings.Call("get", "db.host", &host)
 
 This method internally uses `GenServer.Call` and then `<-call.Done`.
 
-Instead of directly using the *Cast* and *Call* methods, you can write your own API for *SettingsServer*.
+Instead of directly using the *Cast* and *Call* methods, you can write your own API for *SettingsServer*. It's up to you whether the method is blocking or non-blocking. Typically, read operations are blocking and writes are non-blocking.
 
 ```golang
-func (s *SettingsServer) GetSetting(name string) (string, err) {
+func (s *SettingsServer) GetSetting(name string) (string, error) {
     var host string
     err := s.Call("get", "db.host", &host, nil)
     return host, err
@@ -104,5 +104,9 @@ func (s *SettingsServer) Handle(serviceMethod string, seq uint64, body any) (any
 }
 ```
 
-- You can implement this method without worrying about locks or other synchronization primitives for modifying the state of a *server process*.
-- Avoid long-running operations inside the `Handle` method. This can cause a *server process* mailbox to overflow.
+- DO NOT worry about locks or other synchronization primitives when modifying a *server process* state
+- Avoid long-running operations inside the `Handle` method. This can cause a *server process* mailbox to overflow
+
+Examples:
+- [KVStoreServer](./tests/kvstore_server_test.go)
+- [MathServer](./tests/math_server_test.go)
