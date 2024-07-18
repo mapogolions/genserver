@@ -42,6 +42,7 @@ type genServer struct {
 	client *rpc.Client
 }
 
+// Implement `GenServer`
 func (s *genServer) Cast(serviceMethod string, args any, reply any, done chan *rpc.Call) *rpc.Call {
 	return s.client.Go(serviceMethod, args, reply, done)
 }
@@ -64,6 +65,7 @@ type genServerCodec struct {
 	current   response
 }
 
+// Implement `rpc.ClientCodec`
 func (c *genServerCodec) WriteRequest(req *rpc.Request, body any) error {
 	c.requests <- request{seq: req.Seq, serviceMethod: req.ServiceMethod, body: body}
 	return nil
@@ -119,6 +121,7 @@ func (c *genServerCodec) Close() error {
 	return nil
 }
 
+// It's not part of `rpc.ClientCodec`
 func (c *genServerCodec) Listen(behaviour GenServerBehaviour) {
 	for {
 		req, ok := <-c.requests
