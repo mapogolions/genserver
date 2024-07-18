@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGenServer(t *testing.T) {
+func TestKVStoreServer(t *testing.T) {
 	t.Run("should handle N concurrent requests", func(t *testing.T) {
 		// arrange
 		store := NewKVStoreServer[string, int](NewDict[string, int]())
