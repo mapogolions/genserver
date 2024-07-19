@@ -1,6 +1,6 @@
 <mxfile host="65bd71144e">
     <diagram id="TzXELKD3bI7YrYKZwFvC" name="Page-1">
-        <mxGraphModel dx="1543" dy="563" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+        <mxGraphModel dx="1852" dy="563" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
@@ -161,8 +161,8 @@
                 <mxCell id="79" value="GenServer.Listen()" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;dashed=1;" parent="1" vertex="1">
                     <mxGeometry x="630" y="80" width="130" height="15" as="geometry"/>
                 </mxCell>
-                <mxCell id="81" value="GenServerBehaviour.Handle()" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;dashed=1;" parent="1" vertex="1">
-                    <mxGeometry x="470" y="182.5" width="160" height="15" as="geometry"/>
+                <mxCell id="81" value="Behaviour.Handle()" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;dashed=1;" parent="1" vertex="1">
+                    <mxGeometry x="480" y="185" width="160" height="15" as="geometry"/>
                 </mxCell>
             </root>
         </mxGraphModel>

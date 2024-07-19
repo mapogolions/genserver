@@ -11,18 +11,18 @@ func Reply[T any](call *rpc.Call) T {
 	return *(call.Reply.(*T))
 }
 
-type GenServerBehaviour interface {
+type Behaviour interface {
 	Handle(serviceMethod string, seq uint64, body any) (any, error)
 }
 
 type GenServer interface {
-	Listen(GenServerBehaviour)
+	Listen(Behaviour)
 	Cast(serviceMethod string, args any, reply any, done chan *rpc.Call) *rpc.Call
 	Call(serviceMethod string, args any, reply any) error
 	Close() error
 }
 
-func Listen[T GenServerBehaviour](f func(GenServer) T) T {
+func Listen[T Behaviour](f func(GenServer) T) T {
 	serv := NewGenServer()
 	behaviour := f(serv)
 	go serv.Listen(behaviour)
@@ -55,7 +55,7 @@ func (s *genServer) Close() error {
 	return s.client.Close()
 }
 
-func (s *genServer) Listen(behaviour GenServerBehaviour) {
+func (s *genServer) Listen(behaviour Behaviour) {
 	s.codec.Listen(behaviour)
 }
 
@@ -122,7 +122,7 @@ func (c *genServerCodec) Close() error {
 }
 
 // It's not part of `rpc.ClientCodec`
-func (c *genServerCodec) Listen(behaviour GenServerBehaviour) {
+func (c *genServerCodec) Listen(behaviour Behaviour) {
 	for {
 		req, ok := <-c.requests
 		if !ok {

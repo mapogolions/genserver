@@ -3,7 +3,7 @@
 - [The basic idea](#the-basic-idea)
 - [How to create a *server process*](#how-to-create-a-server-process)
 - [How to communicate with a *server process*](#how-to-communicate-with-a-server-process)
-- [How to implement *genserver.GenServerBehaviour*](#how-to-implement-genservergenserverbehaviour)
+- [How to implement *genserver.Behaviour*](#how-to-implement-genserverbehaviour)
 
 ### The basic idea
 
@@ -41,7 +41,7 @@ type SettingsServer struct {
 }
 ```
 
-2) implement the `genserver.GenServerBehaviour`  contract
+2) implement the `genserver.Behaviour`  contract
 
 ```golang
 func (s *SettingsServer) Handle(serviceMethod string, seq uint64, body any) (any, error) {
@@ -90,7 +90,7 @@ func (s *SettingsServer) GetSetting(name string) (string, error) {
 }
 ```
 
-### How to implement `genserver.GenServerBehaviour`
+### How to implement `genserver.Behaviour`
 
 The contract defines a single method, `Handle`. The parameters of this method receive values from the arguments passed to the *Cast* or *Call* methods.
 
