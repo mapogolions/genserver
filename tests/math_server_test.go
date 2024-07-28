@@ -10,6 +10,19 @@ import (
 )
 
 func TestMathServer(t *testing.T) {
+	t.Run("should return unsupported math operation error", func(t *testing.T) {
+		// arrange
+		s := NewMathServer()
+		defer s.Close()
+
+		// act
+
+		call := s.Cast("%", 2, nil, nil)
+		<-call.Done
+
+		assert.ErrorIs(t, call.Error, ErrUnsupportedMathOperation)
+	})
+
 	t.Run("should add", func(t *testing.T) {
 		// arrange
 		s := NewMathServer()
@@ -25,6 +38,8 @@ func TestMathServer(t *testing.T) {
 		assert.Equal(t, 2, v)
 	})
 }
+
+var ErrUnsupportedMathOperation = errors.New("unsupported math operation")
 
 func NewMathServer() *MathServer {
 	return genserver.Listen(func(genserv genserver.GenServer) *MathServer {
@@ -68,7 +83,7 @@ func (s *MathServer) Handle(serviceMethod string, seq uint64, body any) (any, er
 	case "value":
 		v = s.value
 	default:
-		err = errors.New("unsupported operation")
+		err = ErrUnsupportedMathOperation
 	}
 	return v, err
 }
