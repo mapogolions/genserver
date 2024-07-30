@@ -88,18 +88,18 @@ func (c *genServerCodec) ReadResponseHeader(res *rpc.Response) error {
 	c.current = response
 	res.Seq = response.seq
 	res.ServiceMethod = response.serviceMethod
-	if response.result.Error != nil {
-		res.Error = response.result.Error.Error()
+	if response.Err() != nil {
+		res.Error = response.Err().Error()
 	}
-	return response.result.Error
+	return response.Err()
 }
 
 func (c *genServerCodec) ReadResponseBody(body any) error {
 	// if `ReadResponseHeader` DOES NOT return error then `ReadResponseBody` will be called => c.current.result.Err == nil
-	if c.current.result.Error != nil {
+	if c.current.Err() != nil {
 		log.Fatal("must be unreachable")
 	}
-	v := c.current.result.Value
+	v := c.current.Value()
 	if v == nil {
 		return nil
 	}
@@ -163,6 +163,14 @@ type response struct {
 	seq           uint64
 	serviceMethod string
 	result        result[any]
+}
+
+func (r response) Value() any {
+	return r.result.Value
+}
+
+func (r response) Err() error {
+	return r.result.Error
 }
 
 type result[T any] struct {
