@@ -1,6 +1,8 @@
 package genserver
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/rpc"
@@ -30,8 +32,12 @@ func Listen[T Behaviour](f func(GenServer) T) T {
 }
 
 func NewGenServer() *genServer {
-	requests := make(chan request, 4096)
-	responses := make(chan response, 4096)
+	return newGenServer(4096, 4096)
+}
+
+func newGenServer(incap uint, outcap uint) *genServer {
+	requests := make(chan request, incap)
+	responses := make(chan response, outcap)
 	codec := &genServerCodec{requests: requests, responses: responses}
 	client := rpc.NewClientWithCodec(codec)
 	return &genServer{codec: codec, client: client}
@@ -67,8 +73,11 @@ type genServerCodec struct {
 
 // Implement `rpc.ClientCodec`
 func (c *genServerCodec) WriteRequest(req *rpc.Request, body any) error {
-	c.requests <- request{seq: req.Seq, serviceMethod: req.ServiceMethod, body: body}
-	return nil
+	var err error
+	tryCatch(func() {
+		c.requests <- request{seq: req.Seq, serviceMethod: req.ServiceMethod, body: body}
+	}, &err)
+	return err
 }
 
 func (c *genServerCodec) ReadResponseHeader(res *rpc.Response) error {
@@ -79,15 +88,15 @@ func (c *genServerCodec) ReadResponseHeader(res *rpc.Response) error {
 	c.current = response
 	res.Seq = response.seq
 	res.ServiceMethod = response.serviceMethod
-	if response.result.Err != nil {
-		res.Error = response.result.Err.Error()
+	if response.result.Error != nil {
+		res.Error = response.result.Error.Error()
 	}
-	return response.result.Err
+	return response.result.Error
 }
 
 func (c *genServerCodec) ReadResponseBody(body any) error {
 	// if `ReadResponseHeader` DOES NOT return error then `ReadResponseBody` will be called => c.current.result.Err == nil
-	if c.current.result.Err != nil {
+	if c.current.result.Error != nil {
 		log.Fatal("must be unreachable")
 	}
 	v := c.current.result.Value
@@ -130,10 +139,16 @@ func (c *genServerCodec) Listen(behaviour Behaviour) {
 			return
 		}
 		v, err := behaviour.Handle(req.serviceMethod, req.seq, req.body)
-		c.responses <- response{
-			seq:           req.seq,
-			serviceMethod: req.serviceMethod,
-			result:        result[any]{v, err},
+		var crucialErr error
+		tryCatch(func() {
+			c.responses <- response{
+				seq:           req.seq,
+				serviceMethod: req.serviceMethod,
+				result:        result[any]{Value: v, Error: err},
+			}
+		}, &crucialErr)
+		if crucialErr != nil {
+			log.Print(crucialErr)
 		}
 	}
 }
@@ -152,5 +167,22 @@ type response struct {
 
 type result[T any] struct {
 	Value T
-	Err   error
+	Error error
+}
+
+func tryCatch(f func(), crucialErr *error) {
+	defer func() {
+		if info := recover(); info != nil {
+			if errorMessage, ok := info.(string); ok {
+				*crucialErr = errors.New(errorMessage)
+				return
+			}
+			if err, ok := info.(error); ok {
+				*crucialErr = err
+				return
+			}
+			*crucialErr = fmt.Errorf("%v", info)
+		}
+	}()
+	f()
 }
