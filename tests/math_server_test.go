@@ -16,10 +16,10 @@ func TestMathServer(t *testing.T) {
 		defer s.Close()
 
 		// act
-
 		call := s.Cast("%", 2, nil, nil)
 		<-call.Done
 
+		// assert
 		assert.ErrorIs(t, call.Error, ErrUnsupportedMathOperation)
 	})
 
