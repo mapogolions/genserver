@@ -51,7 +51,7 @@ func (s *SettingsServer) Handle(serviceMethod string, seq uint64, body any) (any
 
 ```golang
 func NewSettingsServer(/* state */) *SettingsServer {
-	return Listen(func(genserv GenServer) *SettingsServer {
+	return genserver.Listen(func(genserv genserver.GenServer) *SettingsServer {
 		return &SettingsServer{GenServer: genserv, /* state */ }
 	})
 }
