@@ -48,7 +48,8 @@ type genServer struct {
 	client *rpc.Client
 }
 
-// Implement `GenServer`
+var _ GenServer = (*genServer)(nil)
+
 func (s *genServer) Cast(serviceMethod string, args any, reply any, done chan *rpc.Call) *rpc.Call {
 	return s.client.Go(serviceMethod, args, reply, done)
 }
@@ -71,7 +72,8 @@ type genServerCodec struct {
 	current   response
 }
 
-// Implement `rpc.ClientCodec`
+var _ rpc.ClientCodec = (*genServerCodec)(nil)
+
 func (c *genServerCodec) WriteRequest(req *rpc.Request, body any) error {
 	var err error
 	tryCatch(func() {
@@ -103,7 +105,7 @@ func (c *genServerCodec) ReadResponseBody(body any) error {
 	if v == nil {
 		return nil
 	}
-	if body == nil { // ignore nil `reply`
+	if body == nil { // should ignore nil `reply`
 		return nil
 	}
 	tbody := reflect.TypeOf(body)

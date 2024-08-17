@@ -47,6 +47,8 @@ func NewMathServer() *MathServer {
 	})
 }
 
+var _ genserver.Behaviour = (*MathServer)(nil)
+
 type MathServer struct {
 	genserver.GenServer
 	value int

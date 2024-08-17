@@ -198,6 +198,8 @@ type KeyValuePair[K, V any] struct {
 	Value V
 }
 
+var _ genserver.Behaviour = (*kvStoreServer[string, int])(nil)
+
 // Server process (by its nature) that uses a dedicated concurrency unit (goroutine, erlang process, fiber etc)
 // and constantly listens for incoming requests.
 type kvStoreServer[K comparable, V any] struct {

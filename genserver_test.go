@@ -30,6 +30,8 @@ func TestGenServer(t *testing.T) {
 	})
 }
 
+var _ Behaviour = (*EchoServer)(nil)
+
 func NewEchoServer(delay time.Duration) *EchoServer {
 	genserv := newGenServer(0, 0)
 	s := &EchoServer{GenServer: genserv, delay: delay}
