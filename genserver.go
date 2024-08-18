@@ -140,7 +140,13 @@ func (c *genServerCodec) Listen(behaviour Behaviour) {
 			// rpc.Client.Close -> codec.Close() -> close(codec.requestsStream)
 			return
 		}
-		v, err := behaviour.Handle(req.serviceMethod, req.seq, req.body)
+
+		var v any
+		var err error
+		tryCatch(func() {
+			v, err = behaviour.Handle(req.serviceMethod, req.seq, req.body)
+		}, &err)
+
 		var crucialErr error
 		tryCatch(func() {
 			c.responses <- response{
@@ -149,6 +155,7 @@ func (c *genServerCodec) Listen(behaviour Behaviour) {
 				result:        result[any]{Value: v, Error: err},
 			}
 		}, &crucialErr)
+
 		if crucialErr != nil {
 			log.Print(crucialErr)
 		}
